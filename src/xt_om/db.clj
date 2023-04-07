@@ -1,8 +1,8 @@
 (ns xt-om.db
   "exposes xtdb node `xtdb-node`"
   (:require [clojure.java.io :as io]
-            [xtdb.api :as xt]
-            [mount.core :as mount]))
+            [mount.core :as mount]
+            [xtdb.api :as xt]))
 
 
 (defn start-xtdb! []
@@ -15,10 +15,12 @@
       :xtdb/document-store (kv-store ".dev-db/doc-store")
       :xtdb/index-store (kv-store ".dev-db/index-store")})))
 
-(defn stop-xtdb! [node] 
+
+(defn stop-xtdb! [node]
   (.close node))
 
-(mount/defstate 
+
+(mount/defstate
   xtdb-node
   :start (start-xtdb!)
   :stop (stop-xtdb! xtdb-node))

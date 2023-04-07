@@ -1,16 +1,19 @@
 (ns xt-om.core
-  (:require [xtdb.api :as xt]
+  (:require [mount.core :as mount]
             [xt-om.db :as db]
             [xt-om.warehouse :as warehouse]
-            [mount.core :as mount]))
+            [xtdb.api :as xt]))
+
 
 (mount/start)
+
 
 (defn audit-trail [session-id request-id time subject]
   {:request-id request-id
    :session-id session-id
    :at time
    :subject subject})
+
 
 (defn- order->sku-quantities [order]
   (->> (:order-items order)
@@ -19,11 +22,12 @@
               [sku (reduce + (map :quantity positions))]))
        (into {})))
 
+
 (defn place-order [order]
-  (let [session-id         (str (random-uuid))
-        req-id             (str (random-uuid))
-        req-time           (java.time.Instant/now)
-        audit-trail        (audit-trail session-id req-id req-time (:customer-id order))
+  (let [session-id (str (random-uuid))
+        req-id (str (random-uuid))
+        req-time (java.time.Instant/now)
+        audit-trail (audit-trail session-id req-id req-time (:customer-id order))
         reservation-report (warehouse/reserve-order (order->sku-quantities order))]
     (if (:success? reservation-report)
       (do (xt/submit-tx
@@ -38,6 +42,10 @@
            :type "xtdb-playground.order/out-of-stock"
            :detail (-> (select-keys reservation-report [:short]))}))))
 
+#_((def order {:customer-id :customer/bob
+               :order-items [{:product-id :dog-food :quantity 2}]})
+   (place-order order))
+
 
 (defn find-all-by-doc-type [doc-types]
   (->> (xt/q
@@ -48,23 +56,6 @@
         doc-types)
        (mapcat identity)))
 
-(->> (find-all-by-doc-type [:order])
-     (map #(assoc % :db/version 1))
-     (first))
-
-#_((def order {:customer-id :customer/bob
-               :order-items [{:product-id :dog-food :quantity 2}]})
-   (place-order order))
-
-
-
-
-
-
-
-
-
-
-
-
-
+#_(->> (find-all-by-doc-type [:order])
+       (map #(assoc % :db/version 1))
+       (first))
