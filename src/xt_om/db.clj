@@ -18,7 +18,6 @@
 (defn stop-xtdb! [node] 
   (.close node))
 
-#_{:clj-kondo/ignore [:unresolved-symbol]}
 (mount/defstate 
   xtdb-node
   :start (start-xtdb!)
